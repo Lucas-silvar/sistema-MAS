@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        main.main-content { display: flex; justify-content: center; align-items: center; flex: 1; }
+        main.main-content { display: flex; justify-content: center; align-items: center; flex: 1; }
+        .form-container { width: 700px; padding: 30px; background-color: #F0F0F2; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+        .form-container h2 { text-align: center; margin-bottom: 20px; }
+        .form-container input[type="text"], .form-container input[type="password"], .form-container input[type="email"], .form-container button { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ccc; font-size: 16px; }
+        .form-container button { background-color: #797C89; color: #fff; border: none; cursor: pointer; transition: background-color 0.3s ease; }
+        .form-container button:hover { background-color: #36383F; }
+        #termos-texto { height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; background-color: #fff; line-height: 1.6; }
+        .checkbox-container { display: flex; align-items: center; gap: 10px; }
+        .erro { color: red; text-align: center; margin-bottom: 15px; }
+        hr { border: 1px solid #ccc; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo do Site" height="50">
+        </div>
+        <nav>
+            <a href="{{ url_for('main.index') }}">Início</a>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <div class="form-container">
+            <h2>Cadastro de Usuário</h2>
+            {% if erro %}
+                <div class="erro">{{ erro }}</div>
+            {% endif %}
+            <form id="form-cadastro" method="POST">
+                <label for="nome">Nome completo:</label><br>
+                <input id="nome" type="text" name="nome" required><br>
+                <label for="email">Email:</label><br>
+                <input id="email" type="email" name="email" required><br>
+                <label for="senha">Senha:</label><br>
+                <input id="senha" type="password" name="senha" required><br>
+                <label for="pais">País:</label><br>
+                <input id="pais" type="text" name="pais" required><br>
+                <label for="organizacao">Organização / Instituição:</label><br>
+                <input id="organizacao" type="text" name="organizacao" required><br>
+
+                <h3>Termos de Uso</h3>
+                <div id="termos-texto">
+                    <p>Bem-vindo ao MAS (Microplastic Analysis System). Antes de utilizar este sistema, leia atentamente os seguintes termos:</p>
+
+                    <hr>
+                    <strong>1. Aceitação dos Termos</strong>
+                    <p>Ao utilizar este sistema, você declara que leu, entendeu e concorda com estes Termos de Uso.</p>
+
+                    <hr>
+                    <strong>2. Objetivo e Uso Permitido</strong>
+                    <p>O sistema destina-se a análises acadêmicas e de pesquisa relacionadas à contagem e caracterização de microplásticos. Você concorda em usar o sistema apenas para fins legais e éticos, sem tentar modificar, distribuir ou explorar o sistema para fins comerciais sem autorização prévia do laboratório.</p>
+
+                    <hr>
+                    <strong>3. Responsabilidade</strong>
+                    <p>Os resultados fornecidos pelo sistema têm caráter informativo e científico. O laboratório não se responsabiliza por decisões, interpretações ou aplicações feitas com base nos dados ou análises obtidas pelo sistema. O usuário assume integral responsabilidade pelo uso das informações geradas.</p>
+
+                    <hr>
+                    <strong>4. Propriedade Intelectual</strong>
+                    <p>Todos os códigos, modelos, algoritmos, imagens e documentos disponibilizados pelo sistema são de propriedade do laboratório ou de seus parceiros. É proibida a reprodução, distribuição, modificação ou uso comercial sem consentimento explícito dos responsáveis.</p>
+
+                    <hr>
+                    <strong>5. Privacidade e Proteção de Dados</strong>
+                    <p>Coletamos apenas os dados necessários para registro e uso do sistema, como nome, email, país e organização. Não compartilhamos informações pessoais com terceiros. Os dados poderão ser utilizados internamente para análise estatística e melhoria do sistema, sempre preservando o anonimato do usuário.</p>
+
+                    <hr>
+                    <strong>6. Privacidade e propriedade dos resultados</strong>
+                    <p>O sistema não armazena imagens, gráficos, arquivos .txt ou quaisquer outros dados gerados durante as análises realizadas pelo usuário. Todos os resultados das análises são de propriedade exclusiva do usuário.</p>
+
+                    <hr>
+                    <strong>7. Alterações dos Termos</strong>
+                    <p>O laboratório reserva-se o direito de atualizar estes Termos de Uso a qualquer momento. Alterações serão notificadas e o uso contínuo do sistema implica aceitação das versões atualizadas.</p>
+
+                    <hr>
+                    <strong>8. Créditos e Referências</strong>
+                    <p>O sistema e o modelo de detecção de partículas foram desenvolvidos por Laboratório LCTM/TECPOL, UTFPR – concepção do sistema e implementação do pipeline de análise. Recomenda-se citar estas fontes ao utilizar os dados e resultados obtidos com o sistema em publicações acadêmicas.</p>
+
+                    <hr>
+                    <strong>9. Consentimento</strong>
+                    <p>Ao marcar a caixa “Li e aceito os termos de uso”, você declara que compreendeu e concorda com todos os itens acima, autorizando o uso do sistema dentro das regras aqui estabelecidas.</p>
+                </div>
+
+                <div class="checkbox-container">
+                    <input type="checkbox" name="termos" id="aceito-termos" disabled>
+                    <label for="aceito-termos">Li e aceito os termos de uso</label>
+                </div>
+                <button type="submit">Continuar</button>
+                <p style="margin-top:12px; text-align:center;">Já tem cadastro? <a href="{{ url_for('main.login') }}">Faça login</a></p>
+            </form>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="logos-rodape">
+            <img src="{{ url_for('static', filename='img/logoUTFPR.png') }}" alt="Universidade" height="40">
+            <img src="{{ url_for('static', filename='img/logoLCTM.png') }}" alt="Laboratório" height="100">
+            <img src="{{ url_for('static', filename='img/logoTECPOL.png') }}" alt="Laboratório" height="40">
+        </div>
+    </footer>
+
+    <script>
+        const termosTexto = document.getElementById('termos-texto');
+        const checkbox = document.getElementById('aceito-termos');
+        const form = document.getElementById('form-cadastro');
+
+        // Habilita o checkbox ao rolar até o fim
+        termosTexto.addEventListener('scroll', () => {
+            if (termosTexto.scrollTop + termosTexto.clientHeight >= termosTexto.scrollHeight - 5) {
+                checkbox.disabled = false;
+            }
+        });
+
+        // Validação do formulário
+        form.addEventListener('submit', (e) => {
+            if (!checkbox.checked) {
+                e.preventDefault();
+                alert("Você deve ler e aceitar os termos de uso antes de continuar.");
+            }
+        });
+    </script>
+</body>
+</html>

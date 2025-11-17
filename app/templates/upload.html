@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload de Imagem{% endblock %}
+
+{% block extra_styles %}
+    <style>
+        .upload-page { flex-direction: column; align-items: center; padding: 30px; }
+        .upload-title-main { width: 100%; text-align: center; font-size: 28px; font-weight: bold; margin: 30px 0 40px 0; }
+
+        /* Layout principal: 3 Colunas lado a lado */
+        .upload-layout {
+            display: flex;
+            gap: 24px; /* Espaço entre colunas */
+            flex-wrap: wrap; /* Empilha se não couber */
+            justify-content: center;
+            align-items: flex-start; /* Alinha o topo das colunas */
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        /* Coluna da Esquerda (Botões) */
+        .info-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 250px; /* Largura fixa */
+            flex-shrink: 0; /* Não encolher */
+        }
+        .info-card { background-color: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-size: 16px; text-align: center; }
+        .btn-upload, .btn-calibrar, .btn-processar { padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; }
+        .btn-upload { background-color: #4CAF50; color: white; } .btn-upload:hover { background-color: #45a049; }
+        .btn-calibrar { background-color: #2196F3; color: white; } .btn-calibrar:hover { background-color: #1976D2; }
+        .btn-processar { background-color: #FF9800; color: white; } .btn-processar:hover { background-color: #FB8C00; }
+        #file-input-form { display: none; } /* Oculta o input real */
+
+        /* Coluna do Centro (Upload) */
+        .upload-container {
+            width: 340px;
+            height: 340px; /* Proporção 4:3 */
+            border: 2px dashed #AAA;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 16px;
+            color: #555;
+            border-radius: 10px;
+            background-color: #F8F8F8;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .upload-container img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
+
+        /* Coluna da Direita (Info Panel) */
+        .info-panel {
+            width: 450px;
+            background: #fff;
+            border-radius: 10px;
+            padding: 18px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+        .info-panel-title { font-weight: 700; margin-bottom: 8px; text-align: center; }
+        .info-panel-content { display: flex; gap: 18px; }
+        .info-column { flex: 1; min-width: 0; }
+        .info-column h4 { margin: 0 0 8px 0; font-size: 16px; }
+        .info-column p { margin: 0; line-height: 1.4; color: #333; }
+
+        /* Popup de Calibração (sem alteração) */
+        .calibration-popup { position: fixed; top: 50%; left: 50%; width: 800px; height: 800px; transform: translate(-50%, -50%); background-color: #fff; border: 2px solid #333; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 10px; }
+        .calibration-popup img { max-width: 100%; max-height: 100%; object-fit: contain; cursor: crosshair; }
+        .calibration-info { margin-top: 10px; font-size: 16px; text-align: center; }
+
+        /* Media query para empilhar em telas menores */
+        @media (max-width: 1200px) {
+            .upload-layout {
+                flex-direction: column;
+                align-items: center;
+                max-width: 600px; /* Limita a largura no modo empilhado */
+            }
+            /* Faz as colunas ocuparem a largura total no modo empilhado */
+            .info-cards, .upload-container, .info-panel {
+                width: 100%;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <main class="main-content upload-page">
+        <div class="upload-title-main">Carregue a imagem para processamento</div>
+
+        <div class="upload-layout">
+
+            <div class="info-cards">
+                <div class="info-card">Tempo médio de processamento: 5s</div>
+                <div class="info-card">Precisão na contagem: ±8%</div>
+                <div class="info-card">Precisão das medidas: ±9%</div>
+
+                <button class="btn-upload" id="btn-upload">Selecionar imagem</button>
+                <button class="btn-calibrar" id="btn-calibrar" disabled>Calibrar 5mm</button>
+
+                <form id="form-processar" method="POST" action="{{ url_for('main.processar') }}" enctype="multipart/form-data">
+                    <input type="hidden" name="pixel_por_mm" id="pixel_por_mm" value="">
+                    <input type="file" name="imagem" id="file-input-form" accept="image/*" style="display:none;">
+                    <button type="submit" class="btn-processar" id="btn-processar" disabled>Processar</button>
+                </form>
+
+                <div id="pixel-mm-feedback" class="info-card" style="display:none;"></div>
+            </div>
+
+            <div class="upload-container" id="upload-container">
+                Arraste a imagem ou clique no botão
+            </div>
+
+            <div class="info-panel">
+                <div class="info-panel-title">Metodologia e Tutorial</div>
+                <div class="info-panel-content">
+                    <div class="info-column">
+                        <h4>Metodologia</h4>
+                        <p>Para melhores resultados, fotografe com iluminação uniforme, fundo contrastante de 5x5 cm, configure a camera para a proporção 1:1 e inclua a linha de 5mm para calibração na mesma imagem.</p>
+                    </div>
+                    <div class="info-column">
+                        <h4>Tutorial</h4>
+                        <p>1. Selecione ou arraste a imagem.<br>
+                           2. Clique em "Calibrar 5mm" e marque as duas extremidades da linha de 5mm na imagem.<br>
+                           3. Após a calibração, clique em "Processar".</p>
+                    </div>
+                </div>
+            </div>
+
+        </div> </main>
+
+    <div class="calibration-popup" id="calibration-popup">
+        <img id="calibration-img" src="">
+        <div class="calibration-info">Clique nas extremidades da linha de 5mm</div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        const uploadContainer = document.getElementById('upload-container');
+        const fileInput = document.getElementById('file-input-form');
+        const btnUpload = document.getElementById('btn-upload');
+        const btnCalibrar = document.getElementById('btn-calibrar');
+        const btnProcessar = document.getElementById('btn-processar');
+        const feedback = document.getElementById('pixel-mm-feedback');
+        const pixelPorMMInput = document.getElementById('pixel_por_mm');
+
+        // Popup
+        const popup = document.getElementById('calibration-popup');
+        const calibImg = document.getElementById('calibration-img');
+        let clicks = [];
+
+        // Botão selecionar imagem
+        btnUpload.addEventListener('click', () => fileInput.click());
+
+        // Mostrar imagem no quadrado e no input do form
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                // Atualiza quadrado
+                const reader = new FileReader();
+                reader.onload = () => {
+                    uploadContainer.innerHTML = `<img src="${reader.result}">`;
+                    btnCalibrar.disabled = false;
+                    btnProcessar.disabled = false;
+                    calibImg.src = reader.result; // popup
+                };
+                reader.readAsDataURL(file);
+
+                // Atualiza input do form
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+            }
+        });
+
+        // Drag & Drop
+        uploadContainer.addEventListener('dragover', e => e.preventDefault());
+        uploadContainer.addEventListener('drop', e => {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+
+                const reader = new FileReader();
+                reader.onload = () => {
+                    uploadContainer.innerHTML = `<img src="${reader.result}">`;
+                    btnCalibrar.disabled = false;
+                    btnProcessar.disabled = false;
+                    calibImg.src = reader.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Calibrar
+        btnCalibrar.addEventListener('click', () => {
+            clicks = [];
+            popup.style.display = 'flex';
+        });
+
+        calibImg.addEventListener('click', (e) => {
+            const rect = calibImg.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            clicks.push({x, y});
+
+            if (clicks.length === 2) {
+                const dx = clicks[1].x - clicks[0].x;
+                const dy = clicks[1].y - clicks[0].y;
+                const pixelDist = Math.sqrt(dx*dx + dy*dy);
+                const pixelPerMM = pixelDist / 5; // linha de 5mm
+                feedback.style.display = 'block';
+                feedback.innerHTML = `Calibração: 1 mm = ${pixelPerMM.toFixed(2)} pixels`;
+                popup.style.display = 'none';
+
+                // Atualiza valor do input hidden
+                pixelPorMMInput.value = pixelPerMM.toFixed(2);
+            }
+        });
+    </script>
+{% endblock %}

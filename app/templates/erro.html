@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Erro no Servidor</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f8d7da; color: #721c24; padding: 2rem; }
+        .container { background-color: #f5c6cb; border: 1px solid #e0b0b4; border-radius: 8px; padding: 2rem; max-width: 900px; margin: auto; }
+        h1 { color: #721c24; }
+        pre {
+            background-color: #fff;
+            padding: 1rem;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: monospace;
+            color: #333;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        a { color: #007bff; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Ocorreu um Erro no Servidor</h1>
+        <p>O processo não pôde ser concluído. O erro detalhado está abaixo. Por favor, copie e cole todo este texto para que possamos resolver o problema.</p>
+        <pre>{{ erro }}</pre>
+        <br>
+        <a href="{{ url_for('main.upload') }}">Tentar Novamente</a>
+    </div>
+</body>
+</html>

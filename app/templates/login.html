@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_styles %}
+    <style>
+        /* Apenas estilos específicos do formulário de login; cabeçalho/rodapé são definidos em css/style.css */
+        main.main-content { flex: 1; display: flex; justify-content: center; align-items: center; padding: 40px 20px; background: linear-gradient(180deg,#fafafa,#f3f4f6); }
+        .login-container { width: 420px; background: #fff; border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); padding: 28px; }
+        .login-container h2 { text-align: center; margin-bottom: 18px; color: #222; }
+        .login-container label { display:block; margin-bottom:6px; font-size:14px; color:#333; }
+        .login-container input[type="email"], .login-container input[type="password"] { width:100%; padding:10px 12px; margin-bottom:14px; border-radius:6px; border:1px solid #ddd; font-size:15px; }
+        .login-container button { width:100%; padding:10px; background:#797C89; color:#fff; border:none; border-radius:6px; font-weight:600; cursor:pointer; }
+        .login-container button:hover { background:#36383F; }
+        .erro { color: red; text-align: center; margin-bottom: 10px; }
+        .login-links { text-align: center; margin-top: 12px; }
+        /* footer styles come from css/style.css */
+        .logos-rodape img { margin-right: 12px; }
+        @media (max-width: 480px) { .login-container { width: 92%; padding:18px; } nav a { margin-left: 10px; } }
+    </style>
+    {% endblock %}
+</head>
+<body>
+    {% block content %}
+    <header class="header">
+        <div class="logo">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo do Site" height="50">
+        </div>
+        <nav>
+            <a href="{{ url_for('main.index') }}">Início</a>
+            <a href="{{ url_for('main.cadastro') }}">Cadastro</a>
+            <a href="{{ url_for('main.login') }}">Login</a>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <div class="login-container">
+            <h2>Entrar no Sistema</h2>
+            {% if erro %}
+                <div class="erro">{{ erro }}</div>
+            {% endif %}
+            <form method="POST">
+                <label for="email">Email</label>
+                <input id="email" name="email" type="email" required>
+
+                <label for="senha">Senha</label>
+                <input id="senha" name="senha" type="password" required>
+
+                <button type="submit">Entrar</button>
+            </form>
+            <div class="login-links">
+                <a href="{{ url_for('main.cadastro') }}">Ainda não tem conta? Cadastre-se</a>
+                <br>
+                <a href="{{ url_for('main.forgot_password') }}">Esqueceu a senha?</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="logos-rodape">
+            <img src="{{ url_for('static', filename='img/logoUTFPR.png') }}" alt="Universidade" height="40">
+            <img src="{{ url_for('static', filename='img/logoLCTM.png') }}" alt="Laboratório" height="100">
+            <img src="{{ url_for('static', filename='img/logoTECPOL.png') }}" alt="Laboratório" height="40">
+        </div>
+    </footer>
+    {% endblock %}
+
+    {% block scripts %}
+    <script>
+        const btnLogin = document.getElementById("btnLogin");
+        if (btnLogin) {
+            btnLogin.addEventListener('click', (e) => { e.preventDefault(); window.location.href = '/login'; });
+        }
+    </script>
+    {% endblock %}
+</body>
+</html>

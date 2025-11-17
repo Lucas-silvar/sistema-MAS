@@ -1,0 +1,150 @@
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    font-family: Arial, sans-serif;
+    background-color: #F0F0F2;
+    color: #191A1E;
+}
+
+/* cbecalho*/
+.header {
+    background-color: #C7C8CE;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header .logo {
+    font-weight: bold;
+    font-size: 1.5em;
+}
+
+.header nav a {
+    margin-left: 20px;
+    text-decoration: none;
+    color: #191A1E;
+    font-weight: bold;
+}
+
+/* conteudo principl */
+.main-content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 50px;
+    gap: 50px;
+}
+
+.texto-central {
+    max-width: 500px;
+}
+
+.texto-central h1 {
+    margin-bottom: 20px;
+}
+
+.texto-central p {
+    line-height: 1.5;
+}
+
+/* carrossel imgs*/
+.carousel {
+    width: 100%;
+    max-width: 600px;
+    height: 600px;
+    overflow: hidden;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.carousel-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transition: transform 0.5s ease;
+}
+
+.carousel-item.active img {
+    transform: scale(1.00);
+}
+
+/* rodape*/
+.footer {
+    background-color: #C7C8CE;
+    color: #F0F0F2;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.logos-rodape {
+    display: flex;
+    gap: 40px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.logos-rodape img {
+    height: 50px;
+    width: auto;
+    display: block;
+}
+
+/*  secao deslizante Sobre, Contato*/
+.slide-section {
+    position: fixed;
+    top: -100%;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 120px); /* desce até o rodapé */
+    background-color: #F0F0F2;
+    z-index: 1000;
+    transition: top 0.6s ease;
+    overflow-y: auto;
+    padding: 30px;
+    box-sizing: border-box;
+}
+
+.slide-section.active {
+    top: 0;
+}
+
+.slide-content {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+/* Botao Fechar centralizado */
+.btn-fechar {
+    display: block;
+    margin: 20px auto 0;
+    padding: 12px 30px;
+    background-color: #797C89;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-fechar:hover {
+    background-color: #36383F;
+}
