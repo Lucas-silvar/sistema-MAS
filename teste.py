@@ -5,7 +5,7 @@ import numpy as np
 
 # --- CONFIGURAÇÕES ---
 MODEL_PATH = os.path.join('app', 'models', 'best.pt')
-IMAGE_PATH = 'app/static/img_process/WhatsApp02.jpeg'
+IMAGE_PATH = r"C:\Users\Lucas\OneDrive\Área de Trabalho\Ic_processamento_img\TreinamentoCNN\img\Imagem do WhatsApp de 2025-09-17 à(s) 10.42.50_5916d4bb.jpg"
 PIXEL_POR_MM = 16.4  # Ajuste este valor conforme sua calibração
 # --------------------
 
