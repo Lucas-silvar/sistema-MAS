@@ -28,4 +28,4 @@ pillow
 matplotlib
 numpy
 python-dotenv
-gunicornvou 
+gunicorn
