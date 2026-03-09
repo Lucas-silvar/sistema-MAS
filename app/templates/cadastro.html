@@ -16,6 +16,7 @@
         #termos-texto { height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; background-color: #fff; line-height: 1.6; }
         .checkbox-container { display: flex; align-items: center; gap: 10px; }
         .erro { color: red; text-align: center; margin-bottom: 15px; }
+        .hint { font-size: 13px; color: #444; margin-bottom: 10px; }
         hr { border: 1px solid #ccc; margin: 15px 0; }
     </style>
 </head>
@@ -41,7 +42,8 @@
                 <label for="email">Email:</label><br>
                 <input id="email" type="email" name="email" required><br>
                 <label for="senha">Senha:</label><br>
-                <input id="senha" type="password" name="senha" required><br>
+                <input id="senha" type="password" name="senha" required pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[A-Za-z\d]{8,}" title="Senha com pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas e números; sem símbolos."><br>
+                <p class="hint">A senha deve ter ao menos 8 caracteres, incluir letras maiúsculas, minúsculas e números e não deve conter símbolos.</p>
                 <label for="pais">País:</label><br>
                 <input id="pais" type="text" name="pais" required><br>
                 <label for="organizacao">Organização / Instituição:</label><br>
@@ -57,19 +59,19 @@
 
                     <hr>
                     <strong>2. Objetivo e Uso Permitido</strong>
-                    <p>O sistema destina-se a análises acadêmicas e de pesquisa relacionadas à contagem e caracterização de microplásticos. Você concorda em usar o sistema apenas para fins legais e éticos, sem tentar modificar, distribuir ou explorar o sistema para fins comerciais sem autorização prévia do laboratório.</p>
+                    <p>O sistema destina-se a análises acadêmicas e de pesquisa relacionadas à contagem e caracterização de microplásticos. Você concorda em usar o sistema apenas para fins legais e éticos, sem tentar modificar, distribuir ou explorar o sistema para fins comerciais sem autorização prévia dos desenvolvedores.</p>
 
                     <hr>
                     <strong>3. Responsabilidade</strong>
-                    <p>Os resultados fornecidos pelo sistema têm caráter informativo e científico. O laboratório não se responsabiliza por decisões, interpretações ou aplicações feitas com base nos dados ou análises obtidas pelo sistema. O usuário assume integral responsabilidade pelo uso das informações geradas.</p>
+                    <p>Os resultados fornecidos pelo sistema têm caráter informativo e científico. Os desenvolvedores não se responsabilizam por decisões, interpretações ou aplicações feitas com base nos dados ou análises obtidas pelo sistema. O usuário assume integral responsabilidade pelo uso das informações geradas.</p>
 
                     <hr>
                     <strong>4. Propriedade Intelectual</strong>
-                    <p>Todos os códigos, modelos, algoritmos, imagens e documentos disponibilizados pelo sistema são de propriedade do laboratório ou de seus parceiros. É proibida a reprodução, distribuição, modificação ou uso comercial sem consentimento explícito dos responsáveis.</p>
+                    <p>Todos os códigos, modelos, algoritmos, imagens e documentos disponibilizados pelo sistema são de propriedade do laboratório LCTM e dos desevolvedores do sistema. É proibida a reprodução, distribuição, modificação ou uso comercial sem consentimento explícito dos responsáveis.</p>
 
                     <hr>
                     <strong>5. Privacidade e Proteção de Dados</strong>
-                    <p>Coletamos apenas os dados necessários para registro e uso do sistema, como nome, email, país e organização. Não compartilhamos informações pessoais com terceiros. Os dados poderão ser utilizados internamente para análise estatística e melhoria do sistema, sempre preservando o anonimato do usuário.</p>
+                    <p>Coletamos apenas os dados necessários para registro e uso do sistema, como nome, email, país e organização. Não compartilhamos informações pessoais com terceiros. Os dados fornecidos poderão ser utilizados internamente para análise estatística e melhoria do sistema, sempre preservando o anonimato do usuário.</p>
 
                     <hr>
                     <strong>6. Privacidade e propriedade dos resultados</strong>
@@ -77,7 +79,7 @@
 
                     <hr>
                     <strong>7. Alterações dos Termos</strong>
-                    <p>O laboratório reserva-se o direito de atualizar estes Termos de Uso a qualquer momento. Alterações serão notificadas e o uso contínuo do sistema implica aceitação das versões atualizadas.</p>
+                    <p>Os desenvolvedores reservam-se o direito de atualizar estes Termos de Uso a qualquer momento. Alterações serão notificadas e o uso contínuo do sistema implica aceitação das versões atualizadas.</p>
 
                     <hr>
                     <strong>8. Créditos e Referências</strong>
@@ -92,6 +94,11 @@
                     <input type="checkbox" name="termos" id="aceito-termos" disabled>
                     <label for="aceito-termos">Li e aceito os termos de uso</label>
                 </div>
+
+                <div style="margin:12px 0; display:flex; justify-content:center;">
+                    <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
+                </div>
+
                 <button type="submit">Continuar</button>
                 <p style="margin-top:12px; text-align:center;">Já tem cadastro? <a href="{{ url_for('main.login') }}">Faça login</a></p>
             </form>
@@ -106,6 +113,7 @@
         </div>
     </footer>
 
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <script>
         const termosTexto = document.getElementById('termos-texto');
         const checkbox = document.getElementById('aceito-termos');

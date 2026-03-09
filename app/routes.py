@@ -1,6 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, Response
 import sqlite3
 import os
+import requests
+import re
 from ultralytics import YOLO
 from PIL import Image
 import base64
@@ -11,16 +13,22 @@ import matplotlib.pyplot as plt
 import numpy as np
 import traceback
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 import secrets
 import time
 import smtplib
 from email.message import EmailMessage
+from . import limiter
 
 # --- CONFIGURAÇÃO ---
 MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models', 'best.pt')
 model = YOLO(MODEL_PATH)
 bp = Blueprint('main', __name__)
 DB_PATH = os.path.join(os.path.dirname(__file__), 'usuarios.db')
+
+# --- Allowed file extensions for uploads ---
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp'}
+MAX_FILE_SIZE = 16 * 1024 * 1024  # 16 MB
 
 # --- BANCO DE DADOS ---
 """
@@ -60,6 +68,56 @@ with sqlite3.connect(DB_PATH) as conn:
     conn.commit()
 
 
+# --- reCAPTCHA helper ---
+def verify_recaptcha(token: str, remote_ip: str = None) -> bool:
+    """Verifica o token do reCAPTCHA v2 junto ao serviço do Google.
+    Retorna True quando verificado com sucesso, False caso contrário.
+    """
+    secret = os.environ.get('RECAPTCHA_SECRET_KEY')
+    if not secret or not token:
+        return False
+    try:
+        payload = {'secret': secret, 'response': token}
+        if remote_ip:
+            payload['remoteip'] = remote_ip
+        resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data=payload, timeout=5)
+        data = resp.json()
+        return bool(data.get('success'))
+    except Exception as e:
+        print('reCAPTCHA verification error:', e)
+        return False
+
+
+def is_allowed_file(filename: str) -> bool:
+    """Verifica se a extensão do arquivo é permitida."""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def validate_image_file(file) -> (bool, str):
+    """Valida o arquivo de imagem: extensão, tamanho e MIME type."""
+    if not file or file.filename == '':
+        return False, 'Nenhum arquivo selecionado.'
+    
+    if not is_allowed_file(file.filename):
+        return False, 'Tipo de arquivo inválido. Aceitos: PNG, JPG, JPEG, GIF, BMP.'
+    
+    # Verifica tamanho
+    file.seek(0, os.SEEK_END)
+    size = file.tell()
+    file.seek(0)
+    if size > MAX_FILE_SIZE:
+        return False, f'Arquivo muito grande (máximo {MAX_FILE_SIZE / 1024 / 1024:.0f} MB).'
+    
+    # Verifica MIME type
+    try:
+        img = Image.open(file)
+        img.verify()
+        file.seek(0)
+        return True, ''
+    except Exception:
+        return False, 'Arquivo corrompido ou não é uma imagem válida.'
+
+
 # --- ROTAS DE NAVEGAÇÃO E CADASTRO (RESTAURADAS) ---
 
 @bp.route('/')
@@ -72,9 +130,16 @@ def login_google():
     return redirect(url_for('main.cadastro'))
 
 @bp.route('/cadastro', methods=['GET', 'POST'])
+@limiter.limit("5 per hour")
 def cadastro():
     """Lida com o formulário de cadastro e salva no banco de dados."""
     if request.method == 'POST':
+        # Verificação do reCAPTCHA v2
+        token = request.form.get('g-recaptcha-response')
+        if not token or not verify_recaptcha(token, request.remote_addr):
+            erro = 'Falha na verificação do reCAPTCHA. Tente novamente.'
+            return render_template('cadastro.html', erro=erro, recaptcha_site_key=os.environ.get('RECAPTCHA_SITE_KEY'))
+
         nome = request.form.get('nome')
         email = request.form.get('email')
         senha = request.form.get('senha')
@@ -85,7 +150,7 @@ def cadastro():
         # Validação mínima
         if not senha:
             erro = 'Senha é obrigatória.'
-            return render_template('cadastro.html', erro=erro)
+            return render_template('cadastro.html', erro=erro, recaptcha_site_key=os.environ.get('RECAPTCHA_SITE_KEY'))
 
         # Hash da senha antes de salvar
         password_hash = generate_password_hash(senha)
@@ -100,16 +165,22 @@ def cadastro():
         # Após o cadastro, o usuário é levado para a página de upload (login) novo para teste
         return redirect(url_for('main.login'))
 
-    return render_template('cadastro.html')
+    return render_template('cadastro.html', recaptcha_site_key=os.environ.get('RECAPTCHA_SITE_KEY'))
 
 @bp.route('/login', methods=['GET', 'POST'])
+@limiter.limit("10 per hour")
 def login():
     """Página de login — autentica usuário e inicia sessão."""
     if request.method == 'POST':
+        # Verificação do reCAPTCHA v2
+        token = request.form.get('g-recaptcha-response')
+        if not token or not verify_recaptcha(token, request.remote_addr):
+            return render_template('login.html', erro='Falha na verificação do reCAPTCHA. Tente novamente.', recaptcha_site_key=os.environ.get('RECAPTCHA_SITE_KEY'))
+
         email = request.form.get('email')
         senha = request.form.get('senha')
         if not email or not senha:
-            return render_template('login.html', erro='Email e senha são obrigatórios.')
+            return render_template('login.html', erro='Email e senha são obrigatórios.', recaptcha_site_key=os.environ.get('RECAPTCHA_SITE_KEY'))
 
         with sqlite3.connect(DB_PATH) as conn:
             c = conn.cursor()
@@ -117,20 +188,22 @@ def login():
             row = c.fetchone()
 
         if not row:
-            return render_template('login.html', erro='Usuário não encontrado.')
+            return render_template('login.html', erro='Usuário não encontrado.', recaptcha_site_key=os.environ.get('RECAPTCHA_SITE_KEY'))
 
         user_id, user_email, password_hash = row
         if not password_hash:
-            return render_template('login.html', erro='Senha não cadastrada para este usuário.')
+            return render_template('login.html', erro='Senha não cadastrada para este usuário.', recaptcha_site_key=os.environ.get('RECAPTCHA_SITE_KEY'))
 
         if check_password_hash(password_hash, senha):
+            session.clear()  # Limpa session anterior para evitar session fixation
             session['user_id'] = user_id
             session['user_email'] = user_email
+            session.permanent = True
             return redirect(url_for('main.upload'))
         else:
-            return render_template('login.html', erro='Senha incorreta.')
+            return render_template('login.html', erro='Senha incorreta.', recaptcha_site_key=os.environ.get('RECAPTCHA_SITE_KEY'))
 
-    return render_template('login.html')
+    return render_template('login.html', recaptcha_site_key=os.environ.get('RECAPTCHA_SITE_KEY'))
 
 @bp.route('/logout')
 def logout():
@@ -140,6 +213,7 @@ def logout():
     return redirect(url_for('main.index'))
 
 @bp.route('/forgot_password', methods=['GET', 'POST'])
+@limiter.limit("5 per hour")
 def forgot_password():
     """Form para solicitar recuperação de senha. Gera um token e mostra o link para teste.
     Em produção você enviaria esse link por email.
@@ -183,8 +257,8 @@ def forgot_password():
         if sent:
             return render_template('forgot_password.html', msg='Se o email estiver cadastrado, um link de recuperação foi enviado para seu email.')
         else:
-            # Falha no envio: exibimos o link para teste e a mensagem de erro
-            return render_template('forgot_password.html', msg='Falha ao enviar email — link de teste abaixo:', reset_link=reset_url, send_error=err)
+            # Em ambiente de produção não expor link; informar erro genérico ao usuário
+            return render_template('forgot_password.html', erro='Falha ao enviar e-mail, tente novamente mais tarde.')
 
     return render_template('forgot_password.html')
 
@@ -211,8 +285,10 @@ def reset_password(token):
 
     if request.method == 'POST':
         nova = request.form.get('senha')
-        if not nova or len(nova) < 6:
-            return render_template('reset_password.html', erro='Senha deve ter ao menos 6 caracteres.', token=token)
+        # Regras: pelo menos 8 caracteres, pelo menos 1 dígito, 1 letra maiúscula, 1 minúscula, sem símbolos
+        pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$'
+        if not nova or not re.match(pattern, nova):
+            return render_template('reset_password.html', erro='Senha inválida. Deve ter ao menos 8 caracteres, incluir letras maiúsculas, minúsculas e números, sem símbolos.', token=token)
 
         nova_hash = generate_password_hash(nova)
         with sqlite3.connect(DB_PATH) as conn:
@@ -265,14 +341,19 @@ def download_txt():
     )
 
 @bp.route('/processar', methods=['POST'])
+@limiter.limit("10 per hour")
 def processar():
     try:
         arquivo = request.files.get('imagem')
         pixel_por_mm_str = request.form.get('pixel_por_mm', '').strip()
 
-        # Validação: deve haver arquivo e a calibração (pixel_por_mm)
+        # Validação do arquivo
         if not arquivo or not arquivo.filename:
             return redirect(url_for('main.upload'))
+
+        valid, msg = validate_image_file(arquivo)
+        if not valid:
+            return render_template('upload.html', erro=msg, show_contact_about=False)
 
         if not pixel_por_mm_str:
             # Retorna para upload com mensagem pedindo calibração
@@ -287,11 +368,39 @@ def processar():
             return render_template('upload.html', erro='Calibração inválida. Por favor calibre para obter um valor maior que zero.', show_contact_about=False)
 
         img_original = Image.open(arquivo.stream).convert('RGB')
-        img_redimensionada = img_original.resize((600, 600))
+
+        # Preserve higher resolution: only downscale if image is excessively large
+        width, height = img_original.size
+        max_dim = 1600
+        scale = 1.0
+        if max(width, height) > max_dim:
+            scale = max_dim / float(max(width, height))
+            new_size = (int(width * scale), int(height * scale))
+            img_for_model = img_original.resize(new_size, Image.LANCZOS)
+        else:
+            img_for_model = img_original.copy()
+
+        # Ajusta pixel_por_mm se a imagem foi redimensionada para manter coerência nas medidas
+        try:
+            if pixel_por_mm_str:
+                pixel_por_mm = float(pixel_por_mm_str.replace(',', '.'))
+            else:
+                pixel_por_mm = 0.0
+        except Exception:
+            return render_template('upload.html', erro='Valor de calibração inválido. Por favor calibre novamente.', show_contact_about=False)
+
+        if pixel_por_mm <= 0:
+            return render_template('upload.html', erro='Calibração inválida. Por favor calibre para obter um valor maior que zero.', show_contact_about=False)
+
+        if scale != 1.0:
+            pixel_por_mm = pixel_por_mm * scale
+
+        # Salva a imagem original com qualidade elevada (PNG lossless) para exibição
         buffer_original = io.BytesIO()
-        img_redimensionada.save(buffer_original, format="JPEG")
+        img_original.save(buffer_original, format="PNG")
         original_b64 = base64.b64encode(buffer_original.getvalue()).decode('utf-8')
-        resultados = model.predict(img_redimensionada)
+
+        resultados = model.predict(img_for_model)
         resultado = resultados[0]
         particulas = []
         if resultado.obb is not None and len(resultado.obb) > 0:
@@ -301,10 +410,12 @@ def processar():
                 largura_mm = h / pixel_por_mm
                 razao_aspecto = max(comprimento_mm, largura_mm) / min(comprimento_mm, largura_mm) if min(comprimento_mm, largura_mm) > 0 else 0
                 particulas.append({'id': len(particulas) + 1, 'comprimento': comprimento_mm, 'largura': largura_mm, 'razao_aspecto': razao_aspecto})
+
+        # Gera imagem processada (com anotações) a partir do resultado. Salva em PNG para melhor qualidade.
         img_proc_array = resultado.plot(labels=False, conf=False)
         img_proc_pil = Image.fromarray(img_proc_array[..., ::-1])
         buffer_proc = io.BytesIO()
-        img_proc_pil.save(buffer_proc, format="JPEG")
+        img_proc_pil.save(buffer_proc, format="PNG")
         processada_b64 = base64.b64encode(buffer_proc.getvalue()).decode('utf-8')
         comprimentos = [p['comprimento'] for p in particulas]
         razoes = [p['razao_aspecto'] for p in particulas]
