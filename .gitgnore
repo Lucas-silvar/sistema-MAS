@@ -5,7 +5,7 @@ __pycache__/
 .env
 instance/
 .idea/
-
+.db
 
 
 
