@@ -130,7 +130,7 @@ def login_google():
     return redirect(url_for('main.cadastro'))
 
 @bp.route('/cadastro', methods=['GET', 'POST'])
-@limiter.limit("5 per hour")
+@limiter.limit("30 per hour")
 def cadastro():
     """Lida com o formulário de cadastro e salva no banco de dados."""
     if request.method == 'POST':
@@ -168,7 +168,7 @@ def cadastro():
     return render_template('cadastro.html', recaptcha_site_key=os.environ.get('RECAPTCHA_SITE_KEY'))
 
 @bp.route('/login', methods=['GET', 'POST'])
-@limiter.limit("10 per hour")
+@limiter.limit("40 per hour")
 def login():
     """Página de login — autentica usuário e inicia sessão."""
     if request.method == 'POST':
@@ -213,7 +213,7 @@ def logout():
     return redirect(url_for('main.index'))
 
 @bp.route('/forgot_password', methods=['GET', 'POST'])
-@limiter.limit("5 per hour")
+@limiter.limit("40 per hour")
 def forgot_password():
     """Form para solicitar recuperação de senha. Gera um token e mostra o link para teste.
     Em produção você enviaria esse link por email.
@@ -341,7 +341,7 @@ def download_txt():
     )
 
 @bp.route('/processar', methods=['POST'])
-@limiter.limit("10 per hour")
+@limiter.limit("100 per hour")
 def processar():
     try:
         arquivo = request.files.get('imagem')

@@ -5,6 +5,7 @@
     <title>Cadastro</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/Favicon.ico') }}" type="image/x-icon">
     <style>
         main.main-content { display: flex; justify-content: center; align-items: center; flex: 1; }
         main.main-content { display: flex; justify-content: center; align-items: center; flex: 1; }
@@ -43,7 +44,7 @@
                 <input id="email" type="email" name="email" required><br>
                 <label for="senha">Senha:</label><br>
                 <input id="senha" type="password" name="senha" required pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[A-Za-z\d]{8,}" title="Senha com pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas e números; sem símbolos."><br>
-                <p class="hint">A senha deve ter ao menos 8 caracteres, incluir letras maiúsculas, minúsculas e números e não deve conter símbolos.</p>
+                <p class="hint">A senha deve ter ao menos 8 caracteres, incluir letras maiúsculas, minúsculas e números e <b>não deve conter símbolos</b>.</p>
                 <label for="pais">País:</label><br>
                 <input id="pais" type="text" name="pais" required><br>
                 <label for="organizacao">Organização / Instituição:</label><br>
