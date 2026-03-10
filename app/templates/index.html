@@ -21,8 +21,12 @@
         <nav>
             <a href="#" id="btnContato">Contato</a>
             <a href="#" id="btnSobre">Sobre</a>
-            <a href="{{ url_for('main.cadastro') }}" id="btnCadastro">Cadastro</a>
-            <a href="#" id="btnLogin">Login</a>
+            {% if session.get('user_id') %}
+                <a href="{{ url_for('main.logout') }}" id="btnLogout">Sair</a>
+            {% else %}
+                <a href="{{ url_for('main.cadastro') }}" id="btnCadastro">Cadastro</a>
+                <a href="#" id="btnLogin">Login</a>
+            {% endif %}
         </nav>
     </header>
 

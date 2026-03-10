@@ -303,6 +303,8 @@ def reset_password(token):
 
 @bp.route('/upload')
 def upload():
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
     # Não mostrar links Contato/Sobre nesta página
     return render_template('upload.html', show_contact_about=False)
 
@@ -333,6 +335,8 @@ def criar_histograma_base64(dados, titulo, xlabel):
 
 @bp.route('/download_txt')
 def download_txt():
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
     txt_content = session.get('txt_data', 'Nenhum dado disponível para download.')
     return Response(
         txt_content,
@@ -343,6 +347,8 @@ def download_txt():
 @bp.route('/processar', methods=['POST'])
 @limiter.limit("100 per hour")
 def processar():
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
     try:
         arquivo = request.files.get('imagem')
         pixel_por_mm_str = request.form.get('pixel_por_mm', '').strip()
