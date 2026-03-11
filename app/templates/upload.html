@@ -4,13 +4,13 @@
 
 {% block extra_styles %}
     <style>
-        .upload-page { flex-direction: column; align-items: center; padding: 30px; }
-        .upload-title-main { width: 100%; text-align: center; font-size: 28px; font-weight: bold; margin: 30px 0 40px 0; }
+        .upload-page { flex-direction: column; align-items: center; padding: 20px; }
+        .upload-title-main { width: 100%; text-align: center; font-size: 28px; font-weight: bold; margin: 20px 0 30px 0; }
 
         /* Layout principal: 3 Colunas lado a lado */
         .upload-layout {
             display: flex;
-            gap: 24px; /* Espaço entre colunas */
+            gap: 20px; /* Espaço entre colunas */
             flex-wrap: wrap; /* Empilha se não couber */
             justify-content: center;
             align-items: flex-start; /* Alinha o topo das colunas */
@@ -23,7 +23,9 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-            width: 250px; /* Largura fixa */
+            width: 20vw;
+            min-width: 200px;
+            max-width: 250px; /* Largura fixa */
             flex-shrink: 0; /* Não encolher */
         }
         .info-card { background-color: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-size: 16px; text-align: center; }
@@ -35,8 +37,10 @@
 
         /* Coluna do Centro (Upload) */
         .upload-container {
-            width: 340px;
-            height: 340px; /* Proporção 4:3 */
+            width: 30vw;
+            min-width: 300px;
+            max-width: 400px;
+            aspect-ratio: 1; /* Mantém proporção quadrada */
             border: 2px dashed #AAA;
             display: flex;
             justify-content: center;
@@ -54,7 +58,9 @@
 
         /* Coluna da Direita (Info Panel) */
         .info-panel {
-            width: 450px;
+            width: 35vw;
+            min-width: 350px;
+            max-width: 500px;
             background: #fff;
             border-radius: 10px;
             padding: 18px;
@@ -68,8 +74,8 @@
         .info-column h4 { margin: 0 0 8px 0; font-size: 16px; }
         .info-column p { margin: 0; line-height: 1.4; color: #333; }
 
-        /* Popup de Calibração (sem alteração) */
-        .calibration-popup { position: fixed; top: 50%; left: 50%; width: 800px; height: 800px; transform: translate(-50%, -50%); background-color: #fff; border: 2px solid #333; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 10px; }
+        /* Popup de Calibração (ajustado para proporção em diferentes monitores) */
+        .calibration-popup { position: fixed; top: 50%; left: 50%; width: 80vw; height: 80vh; max-width: 800px; max-height: 800px; transform: translate(-50%, -50%); background-color: #fff; border: 2px solid #333; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 10px; }
         .calibration-popup img { max-width: 100%; max-height: 100%; object-fit: contain; cursor: crosshair; }
         .calibration-info { margin-top: 10px; font-size: 16px; text-align: center; }
 
@@ -209,7 +215,14 @@
             const rect = calibImg.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
-            clicks.push({x, y});
+
+            // Ajustar para o tamanho original da imagem (independente do tamanho da tela)
+            const scaleX = calibImg.naturalWidth / calibImg.clientWidth;
+            const scaleY = calibImg.naturalHeight / calibImg.clientHeight;
+            const x_real = x * scaleX;
+            const y_real = y * scaleY;
+
+            clicks.push({x: x_real, y: y_real});
 
             if (clicks.length === 2) {
                 const dx = clicks[1].x - clicks[0].x;
