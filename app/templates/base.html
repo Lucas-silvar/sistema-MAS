@@ -22,6 +22,7 @@
             <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo do Site" height="50">
         </div>
         <nav>
+            <a href="{{ url_for('main.index') }}">Início</a>
             {% if show_contact_about is not defined or show_contact_about %}
                 <a href="#" id="btnContato">Contato</a>
                 <a href="#" id="btnSobre">Sobre</a>
@@ -29,8 +30,12 @@
             {% if session.get('user_id') %}
                 <a href="{{ url_for('main.logout') }}" id="btnLogout">Sair</a>
             {% else %}
-                <a href="{{ url_for('main.cadastro') }}" id="btnCadastro">Cadastro</a>
-                <a href="#" id="btnLogin">Login</a>
+                {% if show_cadastro_button is not defined or show_cadastro_button %}
+                    <a href="{{ url_for('main.cadastro') }}" id="btnCadastro">Cadastro</a>
+                {% endif %}
+                {% if show_login_button is not defined or show_login_button %}
+                    <a href="{{ url_for('main.login') }}" id="btnLogin">Login</a>
+                {% endif %}
             {% endif %}
         </nav>
     </header>

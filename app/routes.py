@@ -221,7 +221,7 @@ def forgot_password():
     if request.method == 'POST':
         email = request.form.get('email')
         if not email:
-            return render_template('forgot_password.html', erro='Informe o email.')
+            return render_template('forgot_password.html', erro='Informe o email.', show_contact_about=False)
 
         with sqlite3.connect(DB_PATH) as conn:
             c = conn.cursor()
@@ -230,7 +230,7 @@ def forgot_password():
 
             if not row:
                 # Não vazar se o email existe — mostrar mensagem genérica
-                return render_template('forgot_password.html', msg='Se o email estiver cadastrado, um link de recuperação foi gerado.')
+                return render_template('forgot_password.html', msg='Se o email estiver cadastrado, um link de recuperação foi gerado.', show_contact_about=False)
 
             user_id = row[0]
             token = secrets.token_urlsafe(32)
@@ -255,12 +255,12 @@ def forgot_password():
 
         sent, err = send_email_smtp(email, subject, body_text, body_html)
         if sent:
-            return render_template('forgot_password.html', msg='Se o email estiver cadastrado, um link de recuperação foi enviado para seu email.')
+            return render_template('forgot_password.html', msg='Se o email estiver cadastrado, um link de recuperação foi enviado para seu email.', show_contact_about=False)
         else:
             # Em ambiente de produção não expor link; informar erro genérico ao usuário
-            return render_template('forgot_password.html', erro='Falha ao enviar e-mail, tente novamente mais tarde.')
+            return render_template('forgot_password.html', erro='Falha ao enviar e-mail, tente novamente mais tarde.', show_contact_about=False)
 
-    return render_template('forgot_password.html')
+    return render_template('forgot_password.html', show_contact_about=False)
 
 
 @bp.route('/reset_password/<token>', methods=['GET', 'POST'])
