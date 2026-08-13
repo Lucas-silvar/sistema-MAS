@@ -25,6 +25,9 @@ MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models', 'best.pt')
 model = YOLO(MODEL_PATH)
 bp = Blueprint('main', __name__)
 DB_PATH = os.path.join(os.path.dirname(__file__), 'usuarios.db')
+# Diretório para armazenar temporariamente resultados grandes (TXT)
+TXT_STORAGE_DIR = os.path.join(os.path.dirname(__file__), 'tmp')
+os.makedirs(TXT_STORAGE_DIR, exist_ok=True)
 
 # --- Allowed file extensions for uploads ---
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp'}
@@ -337,9 +340,23 @@ def criar_histograma_base64(dados, titulo, xlabel):
 def download_txt():
     if 'user_id' not in session:
         return redirect(url_for('main.login'))
-    txt_content = session.get('txt_data', 'Nenhum dado disponível para download.')
+    txt_file = session.get('txt_file')
+    if txt_file:
+        path = os.path.join(TXT_STORAGE_DIR, txt_file)
+        if os.path.exists(path):
+            with open(path, 'r', encoding='utf-8') as f:
+                txt_content = f.read()
+            return Response(
+                txt_content,
+                mimetype="text/plain",
+                headers={"Content-Disposition":f"attachment;filename={txt_file}"}
+            )
+        else:
+            session.pop('txt_file', None)
+
     return Response(
-        txt_content,
+        'Nenhum resultado disponível para download. Por favor processe uma imagem primeiro.',
+        status=404,
         mimetype="text/plain",
         headers={"Content-Disposition":"attachment;filename=resultados_particulas.txt"}
     )
@@ -431,7 +448,17 @@ def processar():
         txt_buffer.write("ID\tComprimento(mm)\tLargura(mm)\tRazao_Aspecto\n")
         for p in particulas:
             txt_buffer.write(f"{p['id']}\t{p['comprimento']:.4f}\t\t{p['largura']:.4f}\t\t{p['razao_aspecto']:.4f}\n")
-        session['txt_data'] = txt_buffer.getvalue()
+        txt_content = txt_buffer.getvalue()
+        # Escreve o arquivo no armazenamento do servidor e guarda apenas o nome no cookie de sessão
+        fname = f"resultados_{secrets.token_hex(12)}.txt"
+        fpath = os.path.join(TXT_STORAGE_DIR, fname)
+        try:
+            with open(fpath, 'w', encoding='utf-8') as f:
+                f.write(txt_content)
+            session.pop('txt_data', None)
+            session['txt_file'] = fname
+        except Exception as e:
+            return render_template('erro.html', erro='Falha ao gravar os resultados no servidor. Tente novamente mais tarde.')
         return render_template(
             'resultado.html',
             original_b64=original_b64,

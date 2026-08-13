@@ -5,9 +5,5 @@ __pycache__/
 .env
 instance/
 .idea/
-.db
-
-
-
-
-
+*.db
+app/tmp/
